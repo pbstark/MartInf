@@ -59,7 +59,7 @@ won (or lost, in which case this is called the *upset probability*). Typically,
 a threshold will be placed on this probability for deciding whether to certify
 the election or carry on sampling.^[A Bayesian audit requires specifying
 a prior on the winner's vote tally.  For any given prior, it is possible to
-specify a threshold on the posterior probability such that it the audit limits
+specify a threshold on the posterior probability such that the audit limits
 the risk.  Alternatively, it is possible to select priors such that the
 threshold itself is the risk limit.  Further details are in [Vora
 (2019)](https://arxiv.org/abs/1902.00999) and a note by Vukcevic in a separate
@@ -90,9 +90,8 @@ $$
 = \left(\frac{1}{2}\right)^{Y_n} \left(\frac{1}{2}\right)^{n - Y_n}
 = \frac{1}{2^n}.
 $$
-The numerator requires integrating over the prior under $H_1$.  Let this be
-$f(t)$, where $t \in (\frac{1}{2}, 1]$.  We can now write the numerator as
-follows,
+The numerator requires integrating over the prior under $H_1$.  Letting this be
+$f(t)$, where $t \in (\frac{1}{2}, 1]$, allows us to write the numerator as,
 $$
   \Pr(X_1,\dots,X_n \mid H_1)
 = \int_{\frac{1}{2}}^1 t^{Y_n} \left(1 - t\right)^{n - Y_n} f(t) \, dt.
@@ -108,8 +107,8 @@ Similar to KMart, a Bayesian audit proceeds until $B_n < 1 / \alpha$.
 
 Both $A_n$ and $B_n$ are expressed as integrals but with the $X_j$ in different
 'places' in the integrand.  The key to showing they are equivalent is to notice
-that the $X_j$ are binary variables, thus allowing us to set up an identity
-that relates to the two 'ways' of writing the integral.  Specifically, we have
+that the $X_j$ are binary variables, which allows us to set up an identity
+that relates the two ways of writing the integral.  Specifically, we have
 the following identity,
 $$
   \gamma \left(X_j - \frac{1}{2}\right) + \frac{1}{2}
