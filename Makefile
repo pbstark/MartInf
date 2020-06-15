@@ -1,4 +1,4 @@
-MD_FILES  := kmartBayesian.md
+MD_FILES  := $(wildcard [^R]*.md)
 PDF_FILES := $(MD_FILES:.md=.pdf)
 
 all: pdf

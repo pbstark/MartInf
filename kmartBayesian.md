@@ -1,6 +1,6 @@
 % KMart as a Bayesian audit
 % Damjan Vukcevic
-% 25 Jun 2019
+% 25 Jun 2019 (updated 9 Dec 2019)
 
 This note shows a proof that KMart (the martingale approach described in this
 repository) is equivalent to a Bayesian audit with a risk-maximising uniform
@@ -59,7 +59,7 @@ won (or lost, in which case this is called the *upset probability*). Typically,
 a threshold will be placed on this probability for deciding whether to certify
 the election or carry on sampling.^[A Bayesian audit requires specifying
 a prior on the winner's vote tally.  For any given prior, it is possible to
-specify a threshold on the posterior probability such that it the audit limits
+specify a threshold on the posterior probability such that the audit limits
 the risk.  Alternatively, it is possible to select priors such that the
 threshold itself is the risk limit.  Further details are in [Vora
 (2019)](https://arxiv.org/abs/1902.00999) and a note by Vukcevic in a separate
@@ -90,9 +90,8 @@ $$
 = \left(\frac{1}{2}\right)^{Y_n} \left(\frac{1}{2}\right)^{n - Y_n}
 = \frac{1}{2^n}.
 $$
-The numerator requires integrating over the prior under $H_1$.  Let this be
-$f(t)$, where $t \in (\frac{1}{2}, 1]$.  We can now write the numerator as
-follows,
+The numerator requires integrating over the prior under $H_1$.  Letting this be
+$f(t)$, where $t \in (\frac{1}{2}, 1]$, allows us to write the numerator as,
 $$
   \Pr(X_1,\dots,X_n \mid H_1)
 = \int_{\frac{1}{2}}^1 t^{Y_n} \left(1 - t\right)^{n - Y_n} f(t) \, dt.
@@ -108,8 +107,8 @@ Similar to KMart, a Bayesian audit proceeds until $B_n < 1 / \alpha$.
 
 Both $A_n$ and $B_n$ are expressed as integrals but with the $X_j$ in different
 'places' in the integrand.  The key to showing they are equivalent is to notice
-that the $X_j$ are binary variables, thus allowing us to set up an identity
-that relates to the two 'ways' of writing the integral.  Specifically, we have
+that the $X_j$ are binary variables, which allows us to set up an identity
+that relates the two ways of writing the integral.  Specifically, we have
 the following identity,
 $$
   \gamma \left(X_j - \frac{1}{2}\right) + \frac{1}{2}
@@ -189,3 +188,157 @@ example, suppose the reported tally for the reported winner is $t^\star$. Under
 $H_1$, we could use a uniform prior over $(\frac{1}{2}, t^\star]$.  Or, more
 ambitiously, we could specify a narrow interval around $t^\star$ and place all
 of our prior mass on that, which we can think of as a 'fuzzy' version of BRAVO.
+
+
+# Efficient computation by exploiting the equivalence
+
+We can use the above equivalence to develop fast ways to compute the KMart
+statistic, by relating it to standard Bayesian calculations using conjugate
+priors.
+
+First, we show that if we take a conjugate prior distribution, truncate it, and
+add some point masses, the resulting distribution is still conjugate.  Then we
+use this result to write a formula for the posterior distribution for the same
+case as above (simple 2-candidate election, sampling with replacement).
+
+## Truncation and point masses preserve conjugacy
+
+(The proofs shown here are not too hard to derive and may well be described
+elsewhere.)
+
+Suppose we have a single parameter, $\theta$, some data, $D$, a likelihood
+function, $L(\theta \mid D)$, and a conjugate prior distribution, $f(\theta)$.
+That means we have,
+$$
+f(\theta \mid D) \propto L(\theta \mid D) f(\theta).
+$$
+Let the normalising constant be,
+$$
+k = \int L(\theta \mid D) f(\theta) d\theta.
+$$
+This allows us to express the posterior as,
+$$
+f(\theta \mid D) = \frac{1}{k} L(\theta \mid D) f(\theta),
+$$
+The sections that follow each start with these definitions and transform the
+prior in various ways.
+
+### Truncation
+
+Truncate the prior to a subset $S$ (i.e. we only allow $\theta \in S$).  Write
+this truncated prior as,
+$$
+f^*(\theta) = f(\theta) \frac{I_S(\theta)}{z_S},
+$$
+where $I_S(\theta)$ is the indicator function that takes value 1 when $\theta
+\in S$, and $z_S = \int f(\theta) I_S(\theta) d\theta = \int_S f(\theta)
+d\theta$ is the normalising constant due to truncation.
+
+If we use this prior, what posterior do we get?  It will be,
+$$
+f^*(\theta \mid D) = \frac{1}{k^*} L(\theta \mid D) f^*(\theta),
+$$
+where,
+$$
+k^* = \int L(\theta \mid D) f^*(\theta) d\theta.
+$$
+Expanding this out gives,
+$$
+f^*(\theta \mid D) = \frac{1}{k^* z_S} L(\theta \mid D) f(\theta) I_S(\theta)
+           = \frac{k}{k^* z_S} f(\theta \mid D) I_S(\theta).
+$$
+This is the original posterior truncated to $S$.  Thus, the truncation results
+in staying within the same family of (truncated) probability distributions,
+which means this family is conjugate.
+
+### Adding a point mass
+
+Define a 'spiked' prior where we add a point mass at $\theta_0$,
+$$
+f^*(\theta) = a \, \delta_{\theta_0}(\theta) + b f(\theta),
+$$
+where $a + b = 1$.  In other words, a mixture distribution with mixture weights
+$a$ and $b$.  The normalising constant is,
+$$
+k^* = \int L(\theta \mid D) f^*(\theta) d\theta = a L(\theta_0 \mid D) + b k.
+$$
+We can write the posterior as,
+$$
+f^*(\theta \mid D) = \frac{1}{k^*} L(\theta \mid D) f^*(\theta)
+           = \frac{a \, L(\theta_0 \mid D)}{k^*} \delta_{\theta_0}(\theta) +
+             \frac{b k}{k^*} f(\theta \mid D).
+$$
+This is a 'spiked' version of the original posterior.  You can see this more
+clearly by defining,
+$$
+a^* = \frac{a \, L(\theta_0 \mid D)}{k^*}, \quad b^* = \frac{b k}{k^*},
+$$
+where $a^* + b^* = 1$.  Thus, 'spiking' a distribution results in a conjugate
+family.  Note that the mixture weights get updated as we go from the prior to
+the posterior.
+
+### Truncating and adding point masses
+
+We can combine both of the previous operations and we will still retain
+conjugacy.  In fact, due to the generality of the proof, we can apply each one
+an arbitrary number of times, e.g. to add many point masses.
+
+## Application to KMart
+
+When sampling with replacement, the conjugate prior for $t$ (the true tally of
+the reported winner) is a beta distribution.
+
+We showed earlier that KMart was equivalent to using a risk-maximising prior.
+Starting with any beta distribution, we can form the corresponding
+risk-maximising prior by truncating to $t \in (\frac{1}{2}, 1]$ and adding
+a probability mass of $\frac{1}{2}$ at $t = \frac{1}{2}$.  Based on the
+argument presented above, this prior is conjugate.  Moreover, we can express
+the posterior in closed form.
+
+Let the original prior be $t \sim \text{Beta}(\alpha, \beta)$.  Note that this
+$\alpha$ is just a hyperparameter and not a specified risk limit.  The
+risk-maximising prior retains the functional form of this prior for $t
+> \frac{1}{2}$ and also has a mass of $\frac{1}{2}$ at $t = \frac{1}{2}$.
+
+After we observe a sample of size $n$ from the audit, we have a posterior with
+an updated probability mass at $t = \frac{1}{2}$.  This mass will be the upset
+probability.  We can derive an expression for it using equations similar to
+above (it will correspond to $a^*$ using the notation from above).
+
+Let $f(t)$ be the pdf of the original beta prior, $F(t)$ be its cdf, $S
+= (\frac{1}{2}, 1]$ the truncation region, $F'(t)$ the cdf of the
+beta-distributed portion of the posterior (i.e. the posterior distribution if
+we use the original beta prior), and $B(\cdot, \cdot)$ be the [beta
+function](https://en.wikipedia.org/wiki/Beta_function).  We have,
+$$
+k^* = \frac{1}{2} \left(\frac{1}{2}\right)^n + \frac{1}{2} \frac{k'}{z_S},
+$$
+where
+$$
+z_S = \int_\frac{1}{2}^1 f(t) dt = 1 - F\left(\frac{1}{2}\right)
+$$
+and
+$$
+k' = \int_\frac{1}{2}^1 L(t \mid D) f(t) dt
+   = \frac{B(Y_n + \alpha, n - Y_n + \beta)}{B(\alpha, \beta)}
+     \left(1 - F'\left(\frac{1}{2}\right)\right).
+$$
+Putting these together gives,
+$$
+k^* = \frac{1}{2^{n + 1}} +
+      \frac{1}{2} \times
+      \frac{B(Y_n + \alpha, n - Y_n + \beta)}{B(\alpha, \beta)} \times
+      \frac{1 - F'\left(\frac{1}{2}\right)}
+           {1 - F\left(\frac{1}{2}\right)}.
+$$
+The upset probability is,
+$$
+a^* = \frac{\frac{1}{2^{n + 1}}}{k^*}.
+$$
+These quantities will be straightforward to calculate as long we have efficient
+ways to calculate:
+
+1. The beta function
+2. The cdf of a beta distribution
+
+Both have fast implementations in [R](https://www.r-project.org/).
